@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #94949e;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            background: #ffffff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        #result.error {
+            color: #ff4d4d;
+            font-weight: bold;
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        <form id="shorten-form">
+            <label for="url">Enter URL:</label>
+            <input type="text" id="url" name="url" placeholder="https://example.com" required>
+            <button type="submit">Shorten</button>
+        </form>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('shorten-form');
+        const result = document.getElementById('result');
+
+        // Function to validate URL
+        function isValidURL(url) {
+            const pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+                '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+                '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+                '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+                '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+                '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+            return !!pattern.test(url);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('url').value;
+
+            // Validate the URL
+            if (!isValidURL(url)) {
+                result.textContent = 'Please enter a valid URL.';
+                result.classList.add('error');
+                return;
+            }
+
+            result.classList.remove('error'); // Remove error styling if valid
+
+            try {
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML = `Shortened URL: <a href="/${data.code}" target="_blank">/${data.code}</a>`;
+                } else {
+                    const error = await response.json();
+                    result.textContent = `Error: ${error.error}`;
+                    result.classList.add('error');
+                }
+            } catch (err) {
+                result.textContent = 'An error occurred. Please try again.';
+                result.classList.add('error');
+            }
+        });
+    </script>
+</body>
+</html>
